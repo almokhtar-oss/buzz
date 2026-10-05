@@ -55,6 +55,25 @@ final _listedChannel = Channel(
   isMember: true,
 );
 
+/// Listing the channel starts providers that follow the app lifecycle, and
+/// that listens for network changes. Tests have no connectivity plugin, so
+/// answer it here.
+void _mockConnectivity(WidgetTester tester) {
+  const connectivity = MethodChannel(
+    'dev.fluttercommunity.plus/connectivity_status',
+  );
+  tester.binding.defaultBinaryMessenger.setMockMethodCallHandler(
+    connectivity,
+    (_) async => null,
+  );
+  addTearDown(
+    () => tester.binding.defaultBinaryMessenger.setMockMethodCallHandler(
+      connectivity,
+      null,
+    ),
+  );
+}
+
 class _ListedChannelsNotifier extends ChannelsNotifier {
   @override
   Future<List<Channel>> build() async => [_listedChannel];
@@ -144,6 +163,7 @@ Future<void> _pumpSheet(
   String? currentPubkey = 'self',
   bool listChannel = false,
 }) async {
+  if (listChannel) _mockConnectivity(tester);
   Future<void>? presentation;
   await tester.pumpWidget(
     ProviderScope(
@@ -275,6 +295,7 @@ Future<_MessageActionsPopoverHarness> _pumpMessageActionsPopover(
   String? currentPubkey = 'self',
   bool listChannel = false,
 }) async {
+  if (listChannel) _mockConnectivity(tester);
   final sourceHidden = ValueNotifier(false);
 
   Widget launcherPage() => Scaffold(
